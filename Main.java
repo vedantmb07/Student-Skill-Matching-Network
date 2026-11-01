@@ -117,9 +117,8 @@ public class Main {
             System.out.println("7. Find Path via DFS (Deep Exploration)");
             System.out.println("8. Compare BFS vs DFS on Same Query");
             System.out.println("9. Run Graph Verification Test Suite");
-            System.out.println("10. Open Web Frontend in Browser");
             System.out.println("0. Exit Application");
-            System.out.print("Select an option (0-10): ");
+            System.out.print("Select an option (0-9): ");
 
             String input = scanner.nextLine().trim();
             System.out.println();
@@ -181,15 +180,12 @@ public class Main {
                 case "9":
                     GraphTest.runAllTests();
                     break;
-                case "10":
-                    openBrowser("http://localhost:" + activePort);
-                    break;
                 case "0":
                     System.out.println("Exiting Student Skill-Matching Network. Goodbye!");
                     running = false;
                     break;
                 default:
-                    System.out.println("Invalid option. Please choose between 0 and 10.");
+                    System.out.println("Invalid option. Please choose between 0 and 9.");
                     break;
             }
         }
@@ -271,21 +267,6 @@ public class Main {
             } else {
                 System.out.println("💡 Note: In this instance, both paths reached destination in equal edges.");
             }
-        }
-    }
-
-    private static void openBrowser(String url) {
-        try {
-            if (java.awt.Desktop.isDesktopSupported() && java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.BROWSE)) {
-                java.awt.Desktop.getDesktop().browse(new java.net.URI(url));
-            } else if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url).start();
-            } else {
-                System.out.println("Please open your browser and navigate to: " + url);
-            }
-            System.out.println("Browser opened at " + url);
-        } catch (Exception e) {
-            System.out.println("Could not launch browser automatically. Visit: " + url);
         }
     }
 
