@@ -39,8 +39,28 @@ public class Main {
             return;
         }
 
+        if (args.length > 0 && args[0].equalsIgnoreCase("--server")) {
+            System.out.println("🌐 Server mode active at http://localhost:" + activePort + " (Press Ctrl+C to stop)");
+            try {
+                Thread.currentThread().join();
+            } catch (InterruptedException e) {
+                stopWebServer();
+            }
+            return;
+        }
+
         // 4. Interactive Console Loop
-        runConsoleMenu();
+        try {
+            runConsoleMenu();
+        } catch (java.util.NoSuchElementException e) {
+            // When standard input is not attached (background process), keep web server running
+            System.out.println("🌐 Web server active at http://localhost:" + activePort);
+            try {
+                Thread.currentThread().join();
+            } catch (InterruptedException ignored) {
+                stopWebServer();
+            }
+        }
 
         // 5. Cleanup on exit
         stopWebServer();
