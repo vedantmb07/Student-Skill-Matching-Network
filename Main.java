@@ -52,43 +52,43 @@ public class Main {
 
     private static void initializeSampleData(Graph g) {
         // Students
-        int alice = g.addNode("Alice", "STUDENT");
-        int bob = g.addNode("Bob", "STUDENT");
-        int charlie = g.addNode("Charlie", "STUDENT");
-        int diana = g.addNode("Diana", "STUDENT");
-        int evan = g.addNode("Evan", "STUDENT");
-        int fiona = g.addNode("Fiona", "STUDENT");
+        int alex = g.addNode("Alex", "STUDENT");
+        int sam = g.addNode("Sam", "STUDENT");
+        int maya = g.addNode("Maya", "STUDENT");
+        int leo = g.addNode("Leo", "STUDENT");
+        int zoe = g.addNode("Zoe", "STUDENT");
+        int ryan = g.addNode("Ryan", "STUDENT");
 
         // Skills
         int java = g.addNode("Java", "SKILL");
         int python = g.addNode("Python", "SKILL");
-        int react = g.addNode("React", "SKILL");
-        int ml = g.addNode("Machine Learning", "SKILL");
-        int cloud = g.addNode("Cloud Computing", "SKILL");
-        int sql = g.addNode("SQL", "SKILL");
+        int web = g.addNode("Web Dev", "SKILL");
+        int ai = g.addNode("AI", "SKILL");
+        int cloud = g.addNode("Cloud", "SKILL");
+        int db = g.addNode("Database", "SKILL");
 
         // Connect Students to Skills
-        g.addEdge(alice, java);
-        g.addEdge(alice, sql);
+        g.addEdge(alex, java);
+        g.addEdge(alex, db);
 
-        g.addEdge(bob, python);
-        g.addEdge(bob, ml);
-        g.addEdge(bob, sql);
+        g.addEdge(sam, python);
+        g.addEdge(sam, ai);
+        g.addEdge(sam, db);
 
-        g.addEdge(charlie, react);
-        g.addEdge(charlie, java);
+        g.addEdge(maya, web);
+        g.addEdge(maya, java);
 
-        g.addEdge(diana, react);
-        g.addEdge(diana, cloud);
+        g.addEdge(leo, web);
+        g.addEdge(leo, cloud);
 
-        g.addEdge(evan, python);
-        g.addEdge(evan, ml);
+        g.addEdge(zoe, python);
+        g.addEdge(zoe, ai);
 
-        g.addEdge(fiona, cloud);
-        g.addEdge(fiona, ml);
+        g.addEdge(ryan, cloud);
+        g.addEdge(ryan, ai);
 
         // Direct Collaboration (Peer to Peer)
-        g.addEdge(alice, bob);
+        g.addEdge(alex, sam);
     }
 
     // ==========================================================

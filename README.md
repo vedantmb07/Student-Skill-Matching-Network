@@ -12,7 +12,7 @@ A lightweight, high-performance Java console application and interactive web fro
 ## 📌 Project Overview
 
 In academic and project environments, students often need to find peers with complementary skills or identify connection paths for collaboration. The **Student Skill-Matching Network** models this ecosystem as an undirected graph:
-- **Vertices (Nodes):** Represent either a **Student** (e.g., Alice, Bob) or a **Skill** (e.g., Java, Python, Machine Learning).
+- **Vertices (Nodes):** Represent either a **Student** (e.g., Alex, Sam, Maya) or a **Skill** (e.g., Java, Python, AI).
 - **Edges (Connections):** Represent a student possessing a skill (`Student <-> Skill`) or direct peer collaborations (`Student <-> Student`).
 
 By querying this graph:
