@@ -381,6 +381,7 @@
             display: flex;
             flex-direction: column;
             min-height: 520px;
+            height: 100%;
         }
 
         .canvas-toolbar {
@@ -434,6 +435,8 @@
         #graphCanvas {
             width: 100%;
             height: 100%;
+            min-height: 480px;
+            flex: 1;
             display: block;
             cursor: grab;
             touch-action: none; /* Prevents mobile scroll during node dragging */
@@ -718,7 +721,7 @@
                     <span class="card-title">🧪 Graph Test Suite</span>
                 </div>
                 <p style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.4;">
-                    Runs 5 assessed verification tests on the backend JVM data structure.
+                    Runs 6 assessed verification tests on the backend JVM data structure.
                 </p>
                 <button class="btn btn-success" onclick="runGraphTests()">Run Verification Tests</button>
                 <div id="testsBox" style="margin-top: 0.75rem;"></div>
@@ -759,16 +762,24 @@
         let draggedNode = null;
         let isSimulating = true;
         let animFrameId = null;
+        let warmupFrames = 150;
 
         function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            width = rect.width;
-            height = rect.height;
+            const container = canvas.parentElement;
+            width = container.clientWidth || window.innerWidth;
+            height = container.clientHeight || 520;
+            if (height < 400) height = 480;
+
             dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for mobile efficiency
             canvas.width = Math.floor(width * dpr);
             canvas.height = Math.floor(height * dpr);
             ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
             ctx.scale(dpr, dpr);
+
+            if (particles.length > 0) {
+                initParticles();
+            }
+            drawFrame();
             wakeSimulation();
         }
 
@@ -794,6 +805,7 @@
                 updateStats();
                 populateDropdowns();
                 initParticles();
+                drawFrame();
                 wakeSimulation();
             } catch (err) {
                 console.error("Failed to load graph", err);
@@ -908,13 +920,16 @@
 
         // Physics Simulation for Clean Graph Layout
         function initParticles() {
-            const centerX = width / 2 || 200;
-            const centerY = height / 2 || 200;
-            const radius = Math.min(width, height) * 0.35 || 120;
+            if (!graphData.nodes || graphData.nodes.length === 0) return;
+            const w = width > 50 ? width : 600;
+            const h = height > 50 ? height : 500;
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const radius = Math.min(w, h) * 0.35 || 140;
 
             particles = graphData.nodes.map((n, i) => {
                 const existing = particles.find(p => p.id === n.id);
-                if (existing) {
+                if (existing && existing.x > 10 && existing.y > 10) {
                     existing.name = n.name;
                     existing.type = n.type;
                     return existing;
@@ -925,11 +940,11 @@
                     id: n.id,
                     name: n.name,
                     type: n.type,
-                    x: centerX + radius * Math.cos(angle) + (Math.random() - 0.5) * 40,
-                    y: centerY + radius * Math.sin(angle) + (Math.random() - 0.5) * 40,
+                    x: centerX + radius * Math.cos(angle) + (Math.random() - 0.5) * 20,
+                    y: centerY + radius * Math.sin(angle) + (Math.random() - 0.5) * 20,
                     vx: 0,
                     vy: 0,
-                    radius: n.type === 'STUDENT' ? 22 : 19
+                    radius: n.type === 'STUDENT' ? 24 : 20
                 };
             });
         }
@@ -937,15 +952,15 @@
         function resetSimulation() {
             particles = [];
             initParticles();
+            drawFrame();
             wakeSimulation();
         }
 
         function wakeSimulation() {
-            if (!isSimulating) {
-                isSimulating = true;
-                if (!animFrameId) {
-                    animFrameId = requestAnimationFrame(renderLoop);
-                }
+            isSimulating = true;
+            warmupFrames = 150; // Keep simulation alive for at least 150 frames to settle
+            if (!animFrameId) {
+                animFrameId = requestAnimationFrame(renderLoop);
             }
         }
 
@@ -1014,8 +1029,10 @@
                 totalKineticEnergy += (p.vx * p.vx + p.vy * p.vy);
             });
 
-            // Energy dissipation / sleep threshold for battery & CPU optimization
-            if (totalKineticEnergy < 0.04 && !draggedNode) {
+            // Keep simulating during warmup; sleep when settled and not dragging
+            if (warmupFrames > 0) {
+                warmupFrames--;
+            } else if (totalKineticEnergy < 0.05 && !draggedNode) {
                 isSimulating = false;
             }
         }
@@ -1023,6 +1040,15 @@
         // Render Canvas Frame
         function drawFrame() {
             ctx.clearRect(0, 0, width, height);
+
+            if (!particles || particles.length === 0) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '500 14px "Plus Jakarta Sans", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Loading Student Skill-Matching Network...', width / 2, height / 2);
+                return;
+            }
 
             // Draw Edges
             graphData.edges.forEach(edge => {
@@ -1369,6 +1395,14 @@
         }
 
         // Initialize Application
+        window.addEventListener('DOMContentLoaded', () => {
+            resizeCanvas();
+            fetchGraph();
+        });
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            fetchGraph();
+        });
         resizeCanvas();
         fetchGraph();
     </script>

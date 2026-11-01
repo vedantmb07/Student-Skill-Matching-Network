@@ -302,7 +302,12 @@ public class Main {
         server.createContext("/api/edge", new ApiEdgeHandler());
         server.createContext("/api/tests", new ApiTestsHandler());
 
-        server.setExecutor(null);
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(4, r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+        server.setExecutor(executor);
         server.start();
     }
 
@@ -333,6 +338,7 @@ public class Main {
             }
 
             exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
             exchange.sendResponseHeaders(200, responseBytes.length);
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(responseBytes);
