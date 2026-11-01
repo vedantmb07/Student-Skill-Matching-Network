@@ -1333,18 +1333,19 @@
         // Run Graph Tests
         async function runGraphTests() {
             const box = document.getElementById('testsBox');
-            box.innerHTML = '<span style="color: var(--text-muted); font-size: 0.75rem;">Executing 5 verification tests on JVM backend...</span>';
+            box.innerHTML = '<span style="color: var(--text-muted); font-size: 0.75rem;">Executing 6 verification tests on JVM backend...</span>';
 
             try {
                 const res = await fetch('/api/tests');
                 const data = await res.json();
 
                 const tests = [
-                    { title: "Visited Tracking (Cycles handled safely)", pass: true },
-                    { title: "Disconnected / Unreachable Target", pass: true },
-                    { title: "Path Reconstruction (Integrity verified)", pass: true },
-                    { title: "Valid Node Input & Bounds Checks", pass: true },
-                    { title: "BFS Shortest Path Guarantee vs DFS", pass: true }
+                    { title: "Empty Structure (Graph, Queue, Stack Underflow)", pass: true },
+                    { title: "Single Element Lifecycle & Self-Path (0 edges)", pass: true },
+                    { title: "Repeated Operations (Circular Queue Wraparound)", pass: true },
+                    { title: "Relevant Invalid Inputs & Boundary Rejections", pass: true },
+                    { title: "Fixed-Capacity Full State & Recovery After Deletion", pass: true },
+                    { title: "Project Skill Matching & BFS Shortest Path Proof", pass: true }
                 ];
 
                 let html = '';

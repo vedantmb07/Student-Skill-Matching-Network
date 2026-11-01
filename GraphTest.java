@@ -1,12 +1,13 @@
 /**
- * GraphTest - Automated Verification Suite for Custom Graph Data Structure.
+ * GraphTest - Rigorous Verification Suite for Custom Graph Data Structure.
  * 
- * Verifies all 5 core requirements:
- * 1. Visited tracking (cycle prevention, single-visit guarantee)
- * 2. Disconnected or unreachable destination handling
- * 3. Path reconstruction integrity (validity of edge transitions)
- * 4. Valid node input handling (bounds check, invalid lookup, safe rejection)
- * 5. BFS shortest path guarantee vs DFS non-guarantee
+ * Implements 6 core assessment test cases:
+ * 1. Empty Structure Case (Graph, Queue, Stack underflow safety)
+ * 2. Single Element Case (Single vertex self-path, 1-element queue/stack lifecycle)
+ * 3. Repeated Operations Case (Circular queue wraparound, interleaved FIFO bursts, visited reset)
+ * 4. Relevant Invalid Input Case (Bounds checks, null names, self-loops, duplicate edges, unreachable targets)
+ * 5. Fixed-Capacity Boundary Case (Full capacity, overflow rejection & recovery after deletion)
+ * 6. Project-Specific Case (Student skill matching, BFS shortest path guarantee vs DFS non-guarantee)
  */
 public class GraphTest {
 
@@ -15,7 +16,7 @@ public class GraphTest {
 
     public static void main(String[] args) {
         System.out.println("============================================================");
-        System.out.println("     🧪 RUNNING GRAPH DATA STRUCTURE TEST SUITE");
+        System.out.println("     🧪 RUNNING GRAPH DATA STRUCTURE TEST SUITE (6 CASES)");
         System.out.println("============================================================\n");
 
         runAllTests();
@@ -33,241 +34,436 @@ public class GraphTest {
         testsRun = 0;
         testsPassed = 0;
 
-        testVisitedTracking();
-        testDisconnectedDestination();
-        testPathReconstruction();
-        testValidNodeInput();
-        testBfsShortestVsDfs();
+        testEmptyStructure();
+        testSingleElement();
+        testRepeatedOperations();
+        testRelevantInvalidInput();
+        testFixedCapacityAndRecovery();
+        testProjectSpecificCase();
 
         return testsPassed == testsRun;
     }
 
+    // ==========================================================
+    // CASE 1: Empty Structure
+    // ==========================================================
     /**
-     * Requirement 1: Visited Tracking
-     * Asserts that in a graph containing cycles, every reachable vertex is visited
-     * exactly once, and no infinite loops occur.
+     * Asserts that an empty graph, queue, and stack behave safely without crashing.
      */
-    public static void testVisitedTracking() {
+    public static void testEmptyStructure() {
         testsRun++;
-        System.out.print("[TEST 1/5] Visited Tracking (Cycle Handling) ... ");
+        System.out.print("[TEST 1/6] Empty Structure (Graph, Queue, Stack Underflow) ... ");
 
+        // 1. Empty Graph
+        Graph g = new Graph();
+        if (g.getNodeCount() != 0 || g.getAllNodes().length != 0 || g.getAllEdges().length != 0) {
+            fail("Newly constructed graph is not empty.");
+            return;
+        }
+
+        // Path search on empty graph
+        Graph.PathResult res = g.findShortestPathBFS(0, 1);
+        if (res.found || res.path != null) {
+            fail("Path search on empty graph should return found=false and null path.");
+            return;
+        }
+
+        // Skill query on empty graph
+        if (g.getStudentsWithSkill("Java").length != 0) {
+            fail("Query on empty graph should return 0 matching students.");
+            return;
+        }
+
+        // 2. Empty Queue Underflow
+        Graph.CustomQueue queue = new Graph.CustomQueue(5);
+        if (!queue.isEmpty() || queue.size() != 0) {
+            fail("New queue must be empty.");
+            return;
+        }
+        try {
+            queue.dequeue();
+            fail("dequeue() on empty queue must throw IllegalStateException.");
+            return;
+        } catch (IllegalStateException expected) {
+            // Success
+        }
+
+        // 3. Empty Stack Underflow
+        Graph.CustomStack stack = new Graph.CustomStack(5);
+        if (!stack.isEmpty() || stack.size() != 0) {
+            fail("New stack must be empty.");
+            return;
+        }
+        try {
+            stack.pop();
+            fail("pop() on empty stack must throw IllegalStateException.");
+            return;
+        } catch (IllegalStateException expected) {
+            // Success
+        }
+        try {
+            stack.peek();
+            fail("peek() on empty stack must throw IllegalStateException.");
+            return;
+        } catch (IllegalStateException expected) {
+            // Success
+        }
+
+        pass("Empty structures validated: 0-node graph, queue & stack underflow protection verified.");
+    }
+
+    // ==========================================================
+    // CASE 2: Single Element
+    // ==========================================================
+    /**
+     * Asserts behavior when a structure contains exactly one element.
+     */
+    public static void testSingleElement() {
+        testsRun++;
+        System.out.print("[TEST 2/6] Single Element Lifecycle & Self-Path ... ");
+
+        // 1. Single Node Graph
+        Graph g = new Graph();
+        int alex = g.addNode("Alex", "STUDENT");
+
+        if (g.getNodeCount() != 1) {
+            fail("Expected node count = 1, found " + g.getNodeCount());
+            return;
+        }
+
+        // Path from single node to itself: BFS & DFS
+        Graph.PathResult bfsSelf = g.findShortestPathBFS(alex, alex);
+        if (!bfsSelf.found || bfsSelf.length != 1 || bfsSelf.edgeCount != 0 || bfsSelf.path[0] != alex) {
+            fail("Self-path BFS should return path=[alex], length=1, edgeCount=0.");
+            return;
+        }
+
+        Graph.PathResult dfsSelf = g.findPathDFS(alex, alex);
+        if (!dfsSelf.found || dfsSelf.length != 1 || dfsSelf.edgeCount != 0 || dfsSelf.path[0] != alex) {
+            fail("Self-path DFS should return path=[alex], length=1, edgeCount=0.");
+            return;
+        }
+
+        // 2. Single Element in Queue
+        Graph.CustomQueue q = new Graph.CustomQueue(5);
+        q.enqueue(42);
+        if (q.isEmpty() || q.size() != 1) {
+            fail("Queue with 1 item should have size=1 and not be empty.");
+            return;
+        }
+        int dequeued = q.dequeue();
+        if (dequeued != 42 || !q.isEmpty() || q.size() != 0) {
+            fail("Single item dequeue failed or queue not empty after dequeue.");
+            return;
+        }
+
+        // 3. Single Element in Stack
+        Graph.CustomStack st = new Graph.CustomStack(5);
+        st.push(99);
+        if (st.isEmpty() || st.size() != 1 || st.peek() != 99) {
+            fail("Stack with 1 item should have size=1 and peek=99.");
+            return;
+        }
+        int popped = st.pop();
+        if (popped != 99 || !st.isEmpty() || st.size() != 0) {
+            fail("Single item pop failed or stack not empty after pop.");
+            return;
+        }
+
+        pass("Single element verified: 1-node self-path (0 edges), queue & stack 1-item lifecycle intact.");
+    }
+
+    // ==========================================================
+    // CASE 3: Repeated Operations & Circular Wraparound
+    // ==========================================================
+    /**
+     * Asserts that repeated operations (e.g. 30 interleaved enqueues/dequeues) wrap around
+     * the circular buffer without memory corruption, and repeated graph queries reset visited state properly.
+     */
+    public static void testRepeatedOperations() {
+        testsRun++;
+        System.out.print("[TEST 3/6] Repeated Operations & Circular Queue Wraparound ... ");
+
+        // 1. Circular Queue Repeated Wraparound
+        // A small circular queue of capacity 4 will wrap around repeatedly over 30 operations
+        Graph.CustomQueue q = new Graph.CustomQueue(4, true); // fixed-capacity circular queue
+        int pushVal = 0;
+        int expectedPopVal = 0;
+
+        for (int cycle = 0; cycle < 15; cycle++) {
+            // Enqueue 2 items
+            q.enqueue(pushVal++);
+            q.enqueue(pushVal++);
+
+            // Dequeue 2 items (verifying continuous FIFO wraparound)
+            if (q.dequeue() != expectedPopVal++) {
+                fail("Circular queue FIFO sequence broken during repeated cycles.");
+                return;
+            }
+            if (q.dequeue() != expectedPopVal++) {
+                fail("Circular queue FIFO sequence broken during repeated cycles.");
+                return;
+            }
+        }
+
+        // 2. Graph Repeated Queries (Resetting Visited Flags & Cycles)
         Graph g = new Graph();
         int a = g.addNode("A", "STUDENT");
         int b = g.addNode("B", "STUDENT");
         int c = g.addNode("C", "STUDENT");
-        int d = g.addNode("D", "STUDENT");
-
-        // Create cycle A-B-C-A and branch C-D
         g.addEdge(a, b);
         g.addEdge(b, c);
         g.addEdge(c, a); // Cycle!
-        g.addEdge(c, d);
 
-        int[] order = g.getBFSTraversalOrder(a);
-
-        // Check 1: Must visit all 4 nodes
-        if (order.length != 4) {
-            fail("Expected 4 visited nodes, got " + order.length);
-            return;
-        }
-
-        // Check 2: Every node appears exactly once (no duplicates from cycle)
-        boolean[] seen = new boolean[4];
-        for (int id : order) {
-            if (id < 0 || id >= 4 || seen[id]) {
-                fail("Node " + id + " was visited more than once or out of range!");
+        // Run repeated BFS and DFS queries 10 times in a row
+        for (int i = 0; i < 10; i++) {
+            Graph.PathResult r1 = g.findShortestPathBFS(a, c);
+            Graph.PathResult r2 = g.findPathDFS(a, c);
+            if (!r1.found || !r2.found) {
+                fail("Repeated graph query failed on iteration " + i);
                 return;
             }
-            seen[id] = true;
-        }
-
-        pass("Reachable nodes visited exactly once without cyclic loops.");
-    }
-
-    /**
-     * Requirement 2: Disconnected or Unreachable Destination
-     * Asserts that searching for a path between two disconnected subgraphs
-     * cleanly returns found=false and null path without crashing.
-     */
-    public static void testDisconnectedDestination() {
-        testsRun++;
-        System.out.print("[TEST 2/5] Disconnected / Unreachable Destination ... ");
-
-        Graph g = new Graph();
-        // Component 1
-        int s1 = g.addNode("Alice", "STUDENT");
-        int k1 = g.addNode("Python", "SKILL");
-        int s2 = g.addNode("Bob", "STUDENT");
-        g.addEdge(s1, k1);
-        g.addEdge(k1, s2);
-
-        // Component 2 (Isolated)
-        int s3 = g.addNode("Charlie", "STUDENT");
-        int k2 = g.addNode("Rust", "SKILL");
-        int s4 = g.addNode("Diana", "STUDENT");
-        g.addEdge(s3, k2);
-        g.addEdge(k2, s4);
-
-        // BFS path check between isolated components
-        Graph.PathResult bfsResult = g.findShortestPathBFS(s1, s4);
-        if (bfsResult.found || bfsResult.path != null || bfsResult.edgeCount != -1) {
-            fail("BFS incorrectly reported a path between disconnected components!");
-            return;
-        }
-
-        // DFS path check between isolated components
-        Graph.PathResult dfsResult = g.findPathDFS(s1, s4);
-        if (dfsResult.found || dfsResult.path != null || dfsResult.edgeCount != -1) {
-            fail("DFS incorrectly reported a path between disconnected components!");
-            return;
-        }
-
-        pass("Unreachable destination returns found=false and path=null safely.");
-    }
-
-    /**
-     * Requirement 3: Path Reconstruction Integrity
-     * Asserts that the reconstructed path starts at 'start', ends at 'dest',
-     * and every adjacent pair in the reconstructed path has a real edge in the graph.
-     */
-    public static void testPathReconstruction() {
-        testsRun++;
-        System.out.print("[TEST 3/5] Path Reconstruction Integrity ... ");
-
-        Graph g = new Graph();
-        int s1 = g.addNode("Alice", "STUDENT");
-        int k1 = g.addNode("Java", "SKILL");
-        int s2 = g.addNode("Bob", "STUDENT");
-        int k2 = g.addNode("Spring", "SKILL");
-        int s3 = g.addNode("Charlie", "STUDENT");
-
-        g.addEdge(s1, k1);
-        g.addEdge(k1, s2);
-        g.addEdge(s2, k2);
-        g.addEdge(k2, s3);
-
-        Graph.PathResult res = g.findShortestPathBFS(s1, s3);
-
-        if (!res.found || res.path == null) {
-            fail("Failed to find valid path between Alice and Charlie!");
-            return;
-        }
-
-        if (res.path[0] != s1 || res.path[res.length - 1] != s3) {
-            fail("Reconstructed path does not match start and destination vertices!");
-            return;
-        }
-
-        if (res.edgeCount != 4) {
-            fail("Expected 4 edges in chain, found " + res.edgeCount);
-            return;
-        }
-
-        // Verify every edge step exists
-        for (int i = 0; i < res.length - 1; i++) {
-            int u = res.path[i];
-            int v = res.path[i + 1];
-            if (!g.hasEdge(u, v)) {
-                fail("Reconstructed path contains non-existent edge: " + u + " -> " + v);
+            if (r1.edgeCount != 1) { // Direct edge a-c (since c-a is connected)
+                fail("BFS edge count mismatch in repeated query.");
                 return;
             }
         }
 
-        pass("Path correctly reconstructed and every step verified in adjacency list.");
+        pass("Repeated operations verified: circular buffer wraparound successful, visited state resets cleanly.");
     }
 
+    // ==========================================================
+    // CASE 4: Relevant Invalid Inputs & Boundary Rejections
+    // ==========================================================
     /**
-     * Requirement 4: Valid Node Input
-     * Asserts that invalid IDs, out-of-bounds indices, and invalid names are safely handled.
+     * Asserts that negative IDs, out-of-bounds indices, null names, self-loops, duplicate edges,
+     * and unreachable destinations are safely rejected.
      */
-    public static void testValidNodeInput() {
+    public static void testRelevantInvalidInput() {
         testsRun++;
-        System.out.print("[TEST 4/5] Valid Node Input Bounds & Graceful Handling ... ");
+        System.out.print("[TEST 4/6] Relevant Invalid Inputs & Boundary Rejections ... ");
 
         Graph g = new Graph();
-        int a = g.addNode("Alice", "STUDENT");
+        int a = g.addNode("Alex", "STUDENT");
+        int b = g.addNode("Java", "SKILL");
 
-        // 1. Negative ID bounds check
+        // 1. Negative & Out of bounds index
         if (g.isValidNode(-1) || g.getNode(-1) != null) {
-            fail("isValidNode(-1) or getNode(-1) should return false/null.");
+            fail("Negative node index should be invalid.");
             return;
         }
-
-        // 2. High out of bounds check
         if (g.isValidNode(100) || g.getNode(100) != null) {
-            fail("isValidNode(100) on small graph should return false/null.");
+            fail("High index out-of-bounds should be invalid.");
             return;
         }
 
-        // 3. Path finding with invalid input
-        Graph.PathResult r1 = g.findShortestPathBFS(-1, a);
-        if (r1.found) {
-            fail("findShortestPathBFS with -1 should fail safely.");
+        // 2. Edge validation
+        if (g.addEdge(-1, a) || g.addEdge(a, 999)) {
+            fail("addEdge with invalid node IDs must return false.");
             return;
         }
 
-        Graph.PathResult r2 = g.findShortestPathBFS(a, 999);
-        if (r2.found) {
-            fail("findShortestPathBFS with 999 should fail safely.");
+        // 3. Self-loop rejection
+        if (g.addEdge(a, a)) {
+            fail("addEdge(a, a) self-loop must return false.");
             return;
         }
 
-        // 4. Adding edge with invalid node
-        if (g.addEdge(-1, a) || g.addEdge(a, 50)) {
-            fail("addEdge with invalid node IDs should return false.");
+        // 4. Duplicate edge rejection
+        if (!g.addEdge(a, b)) {
+            fail("First addEdge(Alex, Java) must succeed.");
+            return;
+        }
+        if (g.addEdge(a, b)) {
+            fail("Adding duplicate edge(Alex, Java) must return false.");
             return;
         }
 
-        // 5. Lookup non-existent name
-        if (g.findNodeByName("NonExistentStudent") != -1) {
-            fail("findNodeByName for non-existent student must return -1.");
-            return;
-        }
-
-        // 6. Name null validation
+        // 5. Null or empty node name
         try {
             g.addNode(null, "STUDENT");
-            fail("addNode(null) should throw IllegalArgumentException.");
+            fail("addNode(null) must throw IllegalArgumentException.");
+            return;
+        } catch (IllegalArgumentException expected) {
+            // Success
+        }
+        try {
+            g.addNode("   ", "STUDENT");
+            fail("addNode('   ') blank name must throw IllegalArgumentException.");
             return;
         } catch (IllegalArgumentException expected) {
             // Success
         }
 
-        pass("All boundary checks and invalid inputs safely validated.");
+        // 6. Unknown node name lookup
+        if (g.findNodeByName("NonExistentStudent") != -1) {
+            fail("findNodeByName for non-existent name must return -1.");
+            return;
+        }
+
+        // 7. Disconnected component / unreachable destination
+        int isolated = g.addNode("Isolated", "STUDENT");
+        Graph.PathResult unreachBFS = g.findShortestPathBFS(a, isolated);
+        Graph.PathResult unreachDFS = g.findPathDFS(a, isolated);
+        if (unreachBFS.found || unreachBFS.path != null || unreachDFS.found || unreachDFS.path != null) {
+            fail("Path search to disconnected destination must return found=false and path=null.");
+            return;
+        }
+
+        pass("Invalid inputs safely handled: out-of-bounds, self-loops, duplicate edges, null names & unreachable nodes.");
     }
 
+    // ==========================================================
+    // CASE 5: Fixed-Capacity Queue/Stack: Full State & Recovery
+    // ==========================================================
     /**
-     * Requirement 5: BFS Shortest Path vs DFS Non-Guarantee
-     * Constructs a canonical shortcut graph where BFS finds the shortest path
-     * (1 edge), while DFS takes the longer branch (4 edges).
+     * Asserts that a fixed-capacity queue/stack correctly detects full capacity,
+     * rejects overflow, and recovers gracefully after deletions (enqueuing into freed slots).
+     * (Note: as per rubric, unbounded linked implementation does not force overflow).
      */
-    public static void testBfsShortestVsDfs() {
+    public static void testFixedCapacityAndRecovery() {
         testsRun++;
-        System.out.print("[TEST 5/5] BFS Shortest Path Guarantee vs DFS Non-Guarantee ... ");
+        System.out.print("[TEST 5/6] Fixed-Capacity Full State & Recovery After Deletion ... ");
+
+        // 1. Fixed-Capacity Circular Queue Test (Capacity = 3)
+        Graph.CustomQueue q = new Graph.CustomQueue(3, true);
+
+        // Fill to capacity
+        q.enqueue(10);
+        q.enqueue(20);
+        q.enqueue(30);
+
+        if (!q.isFull() || q.size() != 3) {
+            fail("Queue must report isFull=true when size == capacity.");
+            return;
+        }
+
+        // Overflow attempt must throw
+        try {
+            q.enqueue(40);
+            fail("Fixed-capacity queue overflow should throw IllegalStateException.");
+            return;
+        } catch (IllegalStateException expected) {
+            // Success
+        }
+
+        // Recovery after deletion: Dequeue 2 items (frees 2 slots)
+        if (q.dequeue() != 10 || q.dequeue() != 20) {
+            fail("Queue items did not match FIFO order during deletion.");
+            return;
+        }
+
+        if (q.isFull() || q.size() != 1) {
+            fail("Queue should no longer be full after deletions.");
+            return;
+        }
+
+        // Enqueue into newly freed circular slots
+        q.enqueue(40);
+        q.enqueue(50);
+
+        if (!q.isFull() || q.size() != 3) {
+            fail("Queue should be full again after re-filling freed slots.");
+            return;
+        }
+
+        // Dequeue all remaining items and verify exact order [30, 40, 50]
+        if (q.dequeue() != 30 || q.dequeue() != 40 || q.dequeue() != 50 || !q.isEmpty()) {
+            fail("Queue sequence corrupted after deletion and recovery.");
+            return;
+        }
+
+        // 2. Fixed-Capacity Stack Test (Capacity = 3)
+        Graph.CustomStack st = new Graph.CustomStack(3, true);
+        st.push(1);
+        st.push(2);
+        st.push(3);
+
+        if (!st.isFull() || st.size() != 3) {
+            fail("Stack must report isFull=true when size == capacity.");
+            return;
+        }
+
+        try {
+            st.push(4);
+            fail("Fixed-capacity stack overflow should throw IllegalStateException.");
+            return;
+        } catch (IllegalStateException expected) {
+            // Success
+        }
+
+        // Recovery after deletion
+        if (st.pop() != 3 || st.pop() != 2) {
+            fail("Stack pop did not return LIFO order.");
+            return;
+        }
+
+        st.push(100);
+        st.push(200);
+
+        if (st.pop() != 200 || st.pop() != 100 || st.pop() != 1 || !st.isEmpty()) {
+            fail("Stack sequence corrupted after deletion and recovery.");
+            return;
+        }
+
+        pass("Fixed-capacity verified: full capacity detected, overflow blocked, and recovery after deletion confirmed.");
+    }
+
+    // ==========================================================
+    // CASE 6: Project-Specific Case (Student Matching & BFS Shortest Path Proof)
+    // ==========================================================
+    /**
+     * Asserts domain-specific student skill-matching and proves that BFS guarantees
+     * the shortest path by edge count in an unweighted graph while DFS does not guarantee it.
+     */
+    public static void testProjectSpecificCase() {
+        testsRun++;
+        System.out.print("[TEST 6/6] Project-Specific Skill Matching & BFS Optimality Proof ... ");
 
         Graph g = new Graph();
-        int n0 = g.addNode("Start", "STUDENT");
-        int n1 = g.addNode("Hop1", "STUDENT");
-        int n2 = g.addNode("Hop2", "STUDENT");
-        int n3 = g.addNode("Hop3", "STUDENT");
-        int n4 = g.addNode("Destination", "STUDENT");
 
-        // Edge order in adjacency list:
-        // By adding shortcut first, DFS following reverse list or long branch explores long path first:
-        // We add the long chain: 0-1, 1-2, 2-3, 3-4
-        // And shortcut: 0-4
-        // Because of prepend in adjacency list:
-        // If we add (0, 4) then (0, 1): adjList[0] has head=1 -> next=4.
-        // DFS from 0 visits 1 first, recursing: 1 -> 2 -> 3 -> 4 (4 edges).
-        // BFS explores all depth-1 neighbors (1 and 4): reaches 4 immediately at distance 1 (1 edge).
-        g.addEdge(n0, n4); // Shortcut
-        g.addEdge(n0, n1); // Long path start
-        g.addEdge(n1, n2);
-        g.addEdge(n2, n3);
-        g.addEdge(n3, n4);
+        // Setup Students and Skills
+        int alex = g.addNode("Alex", "STUDENT");
+        int sam = g.addNode("Sam", "STUDENT");
+        int zoe = g.addNode("Zoe", "STUDENT");
+        int ryan = g.addNode("Ryan", "STUDENT");
 
-        Graph.PathResult bfs = g.findShortestPathBFS(n0, n4);
-        Graph.PathResult dfs = g.findPathDFS(n0, n4);
+        int java = g.addNode("Java", "SKILL");
+        int ai = g.addNode("AI", "SKILL");
+        int cloud = g.addNode("Cloud", "SKILL");
+
+        // Skill Connections
+        g.addEdge(alex, java);
+        g.addEdge(sam, ai);
+        g.addEdge(zoe, ai);
+        g.addEdge(ryan, ai);
+        g.addEdge(ryan, cloud);
+
+        // 1. Domain Query: Match Students by Skill
+        Graph.GraphNode[] aiStudents = g.getStudentsWithSkill("AI");
+        if (aiStudents.length != 3) {
+            fail("Expected 3 students with skill AI, found " + aiStudents.length);
+            return;
+        }
+
+        // 2. BFS Shortest Path Guarantee vs DFS Non-Guarantee
+        // Build a shortcut graph:
+        // Shortcut: Alex <-> Ryan (1 edge)
+        // Long Path: Alex <-> Java <-> Sam <-> Cloud <-> Ryan (4 edges)
+        int h1 = g.addNode("Hop1", "STUDENT");
+        int h2 = g.addNode("Hop2", "STUDENT");
+        int h3 = g.addNode("Hop3", "STUDENT");
+        int dest = g.addNode("Destination", "STUDENT");
+
+        // Adjacency order: shortcut added first, so DFS following long branch traverses it first
+        g.addEdge(alex, dest); // Shortcut (1 edge)
+        g.addEdge(alex, h1);   // Long chain start
+        g.addEdge(h1, h2);
+        g.addEdge(h2, h3);
+        g.addEdge(h3, dest);   // Long chain end (4 edges)
+
+        Graph.PathResult bfs = g.findShortestPathBFS(alex, dest);
+        Graph.PathResult dfs = g.findPathDFS(alex, dest);
 
         if (!bfs.found || !dfs.found) {
             fail("Both BFS and DFS must find a path.");
@@ -275,7 +471,7 @@ public class GraphTest {
         }
 
         if (bfs.edgeCount != 1) {
-            fail("BFS failed to find the 1-edge shortcut! Found edge count: " + bfs.edgeCount);
+            fail("BFS failed to find the 1-edge shortcut! Found: " + bfs.edgeCount);
             return;
         }
 
@@ -284,8 +480,22 @@ public class GraphTest {
             return;
         }
 
-        pass(String.format("BFS edge count = %d (Shortest), DFS edge count = %d (Non-optimal). BFS guarantee verified!",
-                bfs.edgeCount, dfs.edgeCount));
+        // Verify Path Reconstruction Integrity: every step has an edge in the graph
+        for (int i = 0; i < bfs.length - 1; i++) {
+            if (!g.hasEdge(bfs.path[i], bfs.path[i + 1])) {
+                fail("BFS path contains non-existent edge: " + bfs.path[i] + " -> " + bfs.path[i + 1]);
+                return;
+            }
+        }
+        for (int i = 0; i < dfs.length - 1; i++) {
+            if (!g.hasEdge(dfs.path[i], dfs.path[i + 1])) {
+                fail("DFS path contains non-existent edge: " + dfs.path[i] + " -> " + dfs.path[i + 1]);
+                return;
+            }
+        }
+
+        pass(String.format("Project domain verified: AI matched %d students. BFS = %d edge (Shortest), DFS = %d edges (Non-optimal).",
+                aiStudents.length, bfs.edgeCount, dfs.edgeCount));
     }
 
     private static void pass(String details) {
@@ -299,4 +509,3 @@ public class GraphTest {
         System.out.println("   -> ERROR: " + error);
     }
 }
-

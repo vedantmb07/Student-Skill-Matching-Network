@@ -52,19 +52,29 @@ public class Graph {
 
     /**
      * Array-based custom LIFO Stack for DFS and Path Reconstruction.
+     * Supports both dynamic auto-resizing (default) and fixed-capacity verification mode.
      */
     public static class CustomStack {
         private int[] data;
         private int top;
+        private final boolean fixedCapacity;
 
         public CustomStack(int initialCapacity) {
+            this(initialCapacity, false);
+        }
+
+        public CustomStack(int initialCapacity, boolean fixedCapacity) {
             int cap = initialCapacity > 0 ? initialCapacity : 10;
             this.data = new int[cap];
             this.top = -1;
+            this.fixedCapacity = fixedCapacity;
         }
 
         public void push(int value) {
             if (top + 1 >= data.length) {
+                if (fixedCapacity) {
+                    throw new IllegalStateException("Stack overflow: Fixed-capacity stack is full (capacity=" + data.length + ").");
+                }
                 int[] bigger = new int[data.length * 2];
                 for (int i = 0; i <= top; i++) {
                     bigger[i] = data[i];
@@ -83,7 +93,7 @@ public class Graph {
 
         public int peek() {
             if (isEmpty()) {
-                throw new IllegalStateException("Stack is empty.");
+                throw new IllegalStateException("Stack underflow: Stack is empty.");
             }
             return data[top];
         }
@@ -92,8 +102,16 @@ public class Graph {
             return top == -1;
         }
 
+        public boolean isFull() {
+            return top + 1 >= data.length;
+        }
+
         public int size() {
             return top + 1;
+        }
+
+        public int getCapacity() {
+            return data.length;
         }
     }
 
@@ -103,6 +121,7 @@ public class Graph {
 
     /**
      * Array-based circular FIFO Queue for BFS.
+     * Supports both dynamic auto-resizing (default) and fixed-capacity verification mode.
      */
     public static class CustomQueue {
         private int[] data;
@@ -110,17 +129,26 @@ public class Graph {
         private int rear;
         private int count;
         private int capacity;
+        private final boolean fixedCapacity;
 
         public CustomQueue(int initialCapacity) {
+            this(initialCapacity, false);
+        }
+
+        public CustomQueue(int initialCapacity, boolean fixedCapacity) {
             this.capacity = initialCapacity > 0 ? initialCapacity : 10;
             this.data = new int[this.capacity];
             this.front = 0;
             this.rear = 0;
             this.count = 0;
+            this.fixedCapacity = fixedCapacity;
         }
 
         public void enqueue(int value) {
             if (count == capacity) {
+                if (fixedCapacity) {
+                    throw new IllegalStateException("Queue overflow: Fixed-capacity circular queue is full (capacity=" + capacity + ").");
+                }
                 int newCap = capacity * 2;
                 int[] bigger = new int[newCap];
                 for (int i = 0; i < count; i++) {
@@ -150,8 +178,16 @@ public class Graph {
             return count == 0;
         }
 
+        public boolean isFull() {
+            return count == capacity;
+        }
+
         public int size() {
             return count;
+        }
+
+        public int getCapacity() {
+            return capacity;
         }
     }
 

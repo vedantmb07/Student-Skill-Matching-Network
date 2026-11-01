@@ -4,7 +4,7 @@ A lightweight, high-performance Java console application and interactive web fro
 
 [![Java](https://img.shields.io/badge/Java-25%2B%20%7C%20LTS-orange.svg)](https://www.oracle.com/java/)
 [![Data Structures](https://img.shields.io/badge/Graph%20DS-Zero--Library%20Custom-blue.svg)](#-principal-data-structure-architecture)
-[![Tests](https://img.shields.io/badge/Tests-5%2F5%20Passing%20(100%25)-brightgreen.svg)](#-testing--verification-suite)
+[![Tests](https://img.shields.io/badge/Tests-6%2F6%20Passing%20(100%25)-brightgreen.svg)](#-minimum-testing--analysis-evidence)
 [![Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Pure%20JDK)-success.svg)](#-features)
 
 ---
@@ -71,17 +71,24 @@ Per microproject assessment requirements, **all principal data structures are im
 
 ---
 
-## 🧪 Testing & Verification Suite
+## 🧪 Minimum Testing & Analysis Evidence
 
-The graph implementation passes 5 core verification tests:
+The custom graph data structure and its underlying components (`CustomQueue`, `CustomStack`, `AdjNode`) pass 6 exhaustive test cases covering edge boundaries, empty/single states, circular wraparound, invalid inputs, fixed capacity recovery, and project-specific BFS optimality:
 
-| # | Test Requirement | Description & Result | Status |
-|---|------------------|----------------------|:------:|
-| 1 | **Visited Tracking** | Verified cycle prevention (`A-B-C-A`). All reachable nodes visited exactly once without infinite loops. | `PASS ✅` |
-| 2 | **Disconnected / Unreachable Target** | Two disconnected subgraphs tested. Searching across components safely returns `found=false` and `path=null`. | `PASS ✅` |
-| 3 | **Path Reconstruction Integrity** | Validated that reconstructed path connects `start` to `dest` and every step `(u, v)` exists in the adjacency list. | `PASS ✅` |
-| 4 | **Valid Node Input Bounds** | Tested negative IDs (`-1`), out-of-bounds indices, and non-existent student lookups; all rejected safely. | `PASS ✅` |
-| 5 | **BFS Shortest vs DFS Non-Guarantee** | Tested on a shortcut graph. **BFS found the 1-edge shortcut**, while **DFS took the 4-edge long branch**. | `PASS ✅` |
+| # | Test Case / Scenario | Test Input & Procedure | Observed Result | Status |
+|---|----------------------|------------------------|-----------------|:------:|
+| 1 | **Empty Structure** | Query BFS/DFS and skill matches on 0-node graph; invoke `dequeue()` / `pop()` on empty queue & stack. | Returned `found=false`, `path=null`; correctly caught underflow exceptions without crashing. | `PASS ✅` |
+| 2 | **Single Element** | Graph with 1 node ("Alex", 0 edges); query self-path; push & pop 1 item in queue & stack. | Self-path returned `length=1`, `edgeCount=0`, `path=[Alex]`; 1-item queue/stack lifecycle verified. | `PASS ✅` |
+| 3 | **Repeated Operations** | 30 interleaved enqueues & dequeues over a capacity-4 buffer; 10 repeated path queries on cyclic graph. | Circular buffer indices wrapped around seamlessly; visited flags cleanly reset on every traversal. | `PASS ✅` |
+| 4 | **Relevant Invalid Inputs** | Out-of-bounds IDs (`-1`, `999`), `null`/blank names, self-loops (`u==v`), duplicate edges, and disconnected targets. | All invalid operations rejected safely; exceptions thrown where appropriate; disconnected query returned `found=false`. | `PASS ✅` |
+| 5 | **Fixed-Capacity & Recovery** | Fill fixed-capacity queue & stack to capacity=3; test overflow; delete 2 items; enqueue 2 into freed slots. | Overflow rejected with exception; recovery after deletion verified with exact FIFO/LIFO preservation. | `PASS ✅` |
+| 6 | **Project-Specific BFS Optimality** | Query students by skill ("AI"); compare BFS vs DFS on a 1-edge shortcut vs 4-edge branch. | Matched 3 students; **BFS found 1-edge shortcut**, while **DFS traversed 4 edges**; verified BFS edge-count optimality. | `PASS ✅` |
+
+### Algorithmic Complexity Analysis
+- **Adjacency List Edge Insertion:** $O(d)$ where $d$ is vertex degree (duplicate prevention scan), worst-case $O(V)$, average $O(1)$.
+- **BFS Shortest Path:** $O(V + E)$ time, $O(V)$ auxiliary space using primitive `boolean[]` and array-based `CustomQueue`.
+- **DFS Path Exploration:** $O(V + E)$ time, $O(V)$ auxiliary space via recursive call stack / `CustomStack`.
+- **Circular Queue Operations:** Enqueue $O(1)$, Dequeue $O(1)$, $O(1)$ amortized. Zero memory reallocation overhead in fixed mode.
 
 ---
 

@@ -486,8 +486,8 @@ public class Main {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             boolean pass = GraphTest.runAllTests();
-            String json = String.format("{\n  \"allPassed\": %b,\n  \"testsRun\": 5,\n  \"testsPassed\": %d\n}",
-                    pass, pass ? 5 : 0);
+            String json = String.format("{\n  \"allPassed\": %b,\n  \"testsRun\": 6,\n  \"testsPassed\": %d\n}",
+                    pass, pass ? 6 : 0);
             sendJsonResponse(exchange, 200, json);
         }
     }
